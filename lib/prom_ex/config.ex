@@ -151,7 +151,7 @@ defmodule PromEx.Config do
       any malicious binaries and running them). By default, PromEx will use the result of
       `PromEx.GrafanaAgent.Downloader.default_version()` if no value is provided.
 
-      * Supported versions are `["0.29.0", "0.23.0", "0.22.0", "0.21.2", "0.20.1"]`
+      * Supported versions are `["0.42.0"]`
 
     * `:working_directory` - In order to leverage the GrafanaAgent functionality, PromEx needs to have
       read/write access to a directory in order to download and copy the GrafanaAgent binary. This is the
@@ -199,7 +199,8 @@ defmodule PromEx.Config do
 
   * `:metrics_server` - This key contains the configuration information needed to run a standalone
     HTTP server powered by Cowboy. This server provides a lightweight solution to serving up PromEx
-    metrics. Its configuration options are:
+    metrics. In order to use this standalone metrics server plug you need to have `:plug` and `:plug_cowboy`
+    as dependencies in your project. Its configuration options are:
 
     * `:port` - The port that the Cowboy HTTP server should run on.
 
@@ -325,8 +326,12 @@ defmodule PromEx.Config do
     %{
       version: Keyword.get(grafana_agent_opts, :version, Downloader.default_version()),
       working_directory: Keyword.get(grafana_agent_opts, :working_directory),
-      config_opts: grafana_agent_opts |> get_grafana_agent_config(:config_opts) |> extract_opts_for_config()
+      config_opts: grafana_agent_opts |> Keyword.get(:config_opts) |> extract_opts_for_config()
     }
+  end
+
+  defp extract_opts_for_config({_m, _f, _a} = mfa) do
+    mfa
   end
 
   defp extract_opts_for_config(opts) do
@@ -334,8 +339,8 @@ defmodule PromEx.Config do
       scrape_interval: "15s",
       bearer_token: "blank",
       log_level: "error",
-      agent_port: "4040",
-      grpc_port: "9095",
+      agent_port: "12345",
+      grpc_port: "123456",
       job: nil,
       instance: nil,
       prometheus_url: get_grafana_agent_config(opts, :prometheus_url),

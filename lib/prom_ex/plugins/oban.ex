@@ -97,6 +97,8 @@ if Code.ensure_loaded?(Oban) do
 
       oban_supervisors = get_oban_supervisors(opts)
 
+      polling_opts = Keyword.get(opts, :opts, [])
+
       # Queue length details
       Polling.build(
         :oban_queue_poll_metrics,
@@ -110,7 +112,8 @@ if Code.ensure_loaded?(Oban) do
             measurement: :count,
             tags: [:name, :queue, :state]
           )
-        ]
+        ],
+        polling_opts
       )
     end
 
@@ -435,12 +438,33 @@ if Code.ensure_loaded?(Oban) do
 
       config
       |> Oban.Repo.all(query)
-      |> Enum.each(fn {queue, state, count} ->
+      |> include_zeros_for_missing_queue_states()
+      |> Enum.each(fn {{queue, state}, count} ->
         measurements = %{count: count}
         metadata = %{name: normalize_module_name(oban_supervisor), queue: queue, state: state}
 
         :telemetry.execute([:prom_ex, :plugin, :oban, :queue, :length, :count], measurements, metadata)
       end)
+    end
+
+    defp include_zeros_for_missing_queue_states(query_result) do
+      {_, opts} =
+        Oban.config().plugins
+        |> Enum.find({nil, [queues: Oban.config().queues]}, fn {plugin, _} ->
+          plugin == Oban.Pro.Plugins.DynamicQueues
+        end)
+
+      all_queues =
+        opts
+        |> Keyword.get(:queues, [])
+        |> Keyword.keys()
+
+      all_states = Oban.Job.states()
+
+      zeros = for queue <- all_queues, state <- all_states, into: %{}, do: {{to_string(queue), to_string(state)}, 0}
+      counts = for {queue, state, count} <- query_result, into: %{}, do: {{queue, state}, count}
+
+      Map.merge(zeros, counts)
     end
 
     defp get_oban_supervisors(opts) do

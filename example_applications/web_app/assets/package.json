@@ -23,7 +23,7 @@
     "browserslist": ">=4.16.5",
     "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^3.4.2",
-    "elliptic": "^6.5.4",
+    "elliptic": "^6.5.7",
     "hard-source-webpack-plugin": "^0.13.1",
     "is-svg": "4.4.0",
     "lodash": ">=4.17.21",
@@ -35,7 +35,7 @@
     "sass-loader": "^8.0.2",
     "ssri": ">=6.0.2",
     "terser-webpack-plugin": "^2.3.2",
-    "webpack": "4.41.5",
-    "webpack-cli": "^3.3.2"
+    "webpack": "5.94.0",
+    "webpack-cli": "^5.1.4"
   }
 }
